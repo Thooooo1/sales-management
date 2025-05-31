@@ -14,7 +14,7 @@ Dự án này được thiết kế cho các doanh nghiệp vừa và nhỏ nh�
 
 - **Backend:** Node.js, Express, MySQL, JWT, bcrypt.
 - **Frontend:** HTML, CSS, Bootstrap.
-- **Cơ sở dữ liệu:** COUCHDBCOUCHDB
+- **Cơ sở dữ liệu:** COUCHDB
 
 ## Cài đặt
 
