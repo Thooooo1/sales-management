@@ -14,7 +14,7 @@ Dự án này được thiết kế cho các doanh nghiệp vừa và nhỏ nh�
 
 - **Backend:** Node.js, Express, MySQL, JWT, bcrypt.
 - **Frontend:** HTML, CSS, Bootstrap.
-- **Cơ sở dữ liệu:** MySQL.
+- **Cơ sở dữ liệu:** COUCHDBCOUCHDB
 
 ## Cài đặt
 
@@ -28,5 +28,6 @@ Dự án này được thiết kế cho các doanh nghiệp vừa và nhỏ nh�
 1. **Clone dự án:**
 
    ```bash
-   git clone https://github.com/phanvanphat/sales-management.git
+   git clone
    cd sales-management
+   ```
