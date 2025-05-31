@@ -21,7 +21,7 @@ Dự án này được thiết kế cho các doanh nghiệp vừa và nhỏ nh�
 ### Yêu cầu
 
 - Node.js (phiên bản 14 trở lên)
-- MySQL
+- COUCHDB
 
 ### Hướng dẫn cài đặt
 
