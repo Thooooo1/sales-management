@@ -5,9 +5,17 @@ const jwt = require("jsonwebtoken");
 const Nano = require("nano");
 const winston = require("winston");
 const path = require("path");
+const cors = require("cors");
 
 const app = express();
 app.use(express.json());
+app.use(
+  cors({
+    origin: "*",
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
 
 // Winston logger config
 const logger = winston.createLogger({
@@ -53,7 +61,7 @@ app.use(express.static("public"));
 // CouchDB connection
 const COUCHDB_USER = "anhtho2004";
 const COUCHDB_PASS = "3062004anh";
-const COUCHDB_URL = `http://anhtho2004:3062004anh@localhost:5984`;
+const COUCHDB_URL = `http://${COUCHDB_USER}:${COUCHDB_PASS}@10.6.129.27:5984`;
 
 const nano = Nano(COUCHDB_URL);
 
@@ -173,7 +181,13 @@ app.post("/api/login", async (req, res) => {
 app.get("/api/products", authenticateToken, async (req, res) => {
   try {
     const result = await productsDB.find({ selector: {}, limit: 100 });
-    res.json(result.docs);
+    // Chuyển đổi _id thành id cho frontend
+    const products = result.docs.map((doc) => ({
+      ...doc,
+      id: doc._id,
+      _id: undefined,
+    }));
+    res.json(products);
   } catch (error) {
     logger.error("Get products error: %o", error);
     res.status(500).json({ error: "Lỗi server khi lấy sản phẩm" });
@@ -286,36 +300,32 @@ app.post("/api/orders", authenticateToken, async (req, res) => {
     for (const item of products) {
       const product = await productsDB.get(item.product_id);
       if (!product) {
-        logger.warn(`Product not found for order: ${item.product_id}`);
-        return res
-          .status(400)
-          .json({ error: `Sản phẩm ID ${item.product_id} không tồn tại` });
+        logger.warn(
+          `Create order failed: product not found (${item.product_id})`
+        );
+        return res.status(400).json({ error: "Sản phẩm không tồn tại" });
       }
       if (product.quantity < item.quantity) {
-        logger.warn(`Insufficient stock for product: ${product.name}`);
+        logger.warn(
+          `Create order failed: insufficient quantity for product ${product.name}`
+        );
         return res
           .status(400)
-          .json({ error: `Sản phẩm ${product.name} không đủ tồn kho` });
+          .json({ error: `Sản phẩm ${product.name} không đủ số lượng` });
       }
       total_price += product.price * item.quantity;
     }
 
-    for (const item of products) {
-      const product = await productsDB.get(item.product_id);
-      product.quantity -= item.quantity;
-      await productsDB.insert(product);
-    }
-
     const newOrder = {
       customer_name,
-      items: products,
+      products,
       total_price,
       status: "pending",
       createdAt: new Date().toISOString(),
     };
 
     const insertResult = await ordersDB.insert(newOrder);
-    logger.info(`Order created by ${customer_name}`);
+    logger.info(`Order created for customer: ${customer_name}`);
     res.status(201).json({ id: insertResult.id, rev: insertResult.rev });
   } catch (error) {
     logger.error("Create order error: %o", error);
@@ -333,11 +343,13 @@ app.put("/api/orders/:id", authenticateToken, async (req, res) => {
 
   try {
     const order = await ordersDB.get(id);
-    order.status = status;
-    order.updatedAt = new Date().toISOString();
-
-    const updateResult = await ordersDB.insert(order);
-    logger.info(`Order ${id} status updated to ${status}`);
+    const updatedOrder = {
+      ...order,
+      status,
+      updatedAt: new Date().toISOString(),
+    };
+    const updateResult = await ordersDB.insert(updatedOrder);
+    logger.info(`Order ${id} status updated to: ${status}`);
     res.json({ id: updateResult.id, rev: updateResult.rev });
   } catch (error) {
     logger.error("Update order error: %o", error);
@@ -345,21 +357,25 @@ app.put("/api/orders/:id", authenticateToken, async (req, res) => {
   }
 });
 
-app.delete("/api/orders/:id", authenticateToken, async (req, res) => {
-  const id = req.params.id;
-  try {
-    const order = await ordersDB.get(id);
-    await ordersDB.destroy(id, order._rev);
-    logger.info(`Order deleted: ${id}`);
-    res.json({ message: "Xóa đơn hàng thành công" });
-  } catch (error) {
-    logger.error("Delete order error: %o", error);
-    res.status(404).json({ error: "Đơn hàng không tồn tại hoặc lỗi server" });
-  }
-});
-
 // Start server
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, "0.0.0.0", () => {
-  logger.info(`Server is running on port ${PORT}`);
-});
+const PORT = 5000;
+const HOST = "0.0.0.0";
+
+const startServer = (port) => {
+  const server = app.listen(port, HOST, () => {
+    logger.info(
+      `Server is running on http://10.6.129.27:${port} (listening on ${HOST})`
+    );
+  });
+
+  server.on("error", (error) => {
+    if (error.code === "EADDRINUSE") {
+      logger.warn(`Port ${port} is busy, trying ${port + 1}`);
+      startServer(port + 1);
+    } else {
+      logger.error("Server error: %o", error);
+    }
+  });
+};
+
+startServer(PORT);

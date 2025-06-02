@@ -1,0 +1,19 @@
+version: ""
+services:
+  app:
+    build: .
+    ports:
+      - "5001:5000"
+    depends_on:
+      - db
+  db:
+    image: couchdb
+    ports:
+      - "5984:5984"
+    environment:
+      - COUCHDB_USER=anhtho2004
+      - COUCHDB_PASSWORD=3062004anh
+    volumes:
+      - couchdb_data:/opt/couchdb/data
+volumes:
+  couchdb_data:

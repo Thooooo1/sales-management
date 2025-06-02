@@ -1,6 +1,8 @@
 const Nano = require("nano");
 
-const COUCHDB_URL = "http://anhtho3062004:3062004anh@localhost:5984";
+const COUCHDB_USER = "anhtho2004";
+const COUCHDB_PASS = "3062004anh";
+const COUCHDB_URL = `http://${COUCHDB_USER}:${COUCHDB_PASS}@localhost:5984`;
 
 const nano = Nano(COUCHDB_URL);
 
