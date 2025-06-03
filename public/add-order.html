@@ -120,7 +120,7 @@
       });
 
       function loadProducts() {
-        fetch("http://10.6.129.27:5000/api/products", {
+        fetch("http://localhost:5000/api/products", {
           headers: { Authorization: `Bearer ${token}` },
         })
           .then((res) => {
@@ -207,7 +207,7 @@
           }
 
           // Gửi đơn hàng
-          fetch("http://10.6.129.27:5000/api/orders", {
+          fetch("http://localhost:5000/api/orders", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",

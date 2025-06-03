@@ -364,7 +364,7 @@ const HOST = "0.0.0.0";
 const startServer = (port) => {
   const server = app.listen(port, HOST, () => {
     logger.info(
-      `Server is running on http://10.6.129.27:${port} (listening on ${HOST})`
+      `Server is running on http://localhost:${port} (listening on ${HOST})`
     );
   });
 
